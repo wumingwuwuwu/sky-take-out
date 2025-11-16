@@ -46,7 +46,6 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             shoppingCartMapper.updateNumberById(cart);
         }else {
             //如果不存在 需要插入一条数据
-
             //判断本次添加到购物车的是菜品还是套餐
             Long dishId = shoppingCartDTO.getDishId();
             if(dishId != null){
@@ -55,7 +54,6 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
                 shoppingCart.setName(dish.getName());
                 shoppingCart.setImage(dish.getImage());
                 shoppingCart.setAmount(dish.getPrice());
-
             }else{
                 //本次添加到购物车的是套餐
                 Long setmealId = shoppingCartDTO.getSetmealId();
@@ -70,7 +68,41 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             shoppingCartMapper.insert(shoppingCart);
 
         }
+    }
 
+    /**
+     * 减少购物车中的某样商品
+     * @param shoppingCartDTO
+     */
+    public void subShoppingCart(ShoppingCartDTO shoppingCartDTO){
+        //查找用户想要减少的商品
+        ShoppingCart shoppingCart = new ShoppingCart();
+        BeanUtils.copyProperties(shoppingCartDTO,shoppingCart);
+        Long userId = BaseContext.getCurrentId();
+        shoppingCart.setUserId(userId);
+        List<ShoppingCart> list = shoppingCartMapper.list(shoppingCart);
+        if(list != null && list.size() > 0){
+            //将商品数量减一
+            shoppingCart = list.get(0);
+            shoppingCart.setNumber(shoppingCart.getNumber()-1);
+            if(shoppingCart.getNumber() == 0){
+                //判断数量是否为0，若为0则直接删除商品
+                shoppingCartMapper.deleteItem(shoppingCart);
+            }else{
+                //不为0，更新商品数量
+                shoppingCartMapper.updateNumberById(shoppingCart);
+            }
+        }
+    }
 
+    /**
+     * 查看购物车
+     * @return
+     */
+    public List<ShoppingCart> showShoppingCart() {
+        return shoppingCartMapper.list(ShoppingCart.
+                builder().
+                userId(BaseContext.getCurrentId()).
+                build());
     }
 }
